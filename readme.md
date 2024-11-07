@@ -1,13 +1,14 @@
 1) Iniciar Virtual Enviromente
 
         -pip install virtualenv
-        -virtualenv -p python venv 
+        -python -m venv venv
+        -venv\scripts\activate
 
-2) Instalar dependencias del proyecto
+3) Instalar dependencias del proyecto
 
         -pip install -r requirements.txt
         
-3) configurar Base de datos
+4) configurar Base de datos
 
         -crear archivo .env 
         -ingresar los siguientes datos:
@@ -17,7 +18,7 @@
             MYSQL_PASSWORD= TU CONTRASEÑA
             MYSQL_DB= EL NOMBRE DEL ESQUEMA
 
-4) Para ejecutar el servidor usar 
+5) Para ejecutar el servidor usar 
 
         python app.py                   
 
