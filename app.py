@@ -53,7 +53,7 @@ def agregar_curso():
     cursoId = cursos.post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app)
     valorCuotaAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
     lista_alumnos = alumnos.cargar_alumnos(conexion=conexion, cursoId=cursoId, xlsx_df=xlsx_df, valorCuotaAlumno=valorCuotaAlumno)
-
+    
     return f'Se ha creado el curso {nomCurso}, se han cargado {len(lista_alumnos)} alumnos'
 
 if __name__ == '__main__':
