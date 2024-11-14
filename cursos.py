@@ -1,7 +1,5 @@
-from flask import jsonify, request
-import math
+from flask import jsonify
 import os
-import pandas as pd
 
 def get_curso(conexion):
     cursor=conexion.connection.cursor()
@@ -18,25 +16,24 @@ def get_curso(conexion):
                 'cantAlumnos':fila[5]}
         cursos.append(fila)
     return jsonify({'mensajes':'Consulta Ok', 'Cursos':cursos})
+    
 
-
-def post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app):
+def post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje):
     cursor=conexion.connection.cursor()
-    sql = "INSERT INTO curso (nomCurso, nomColegio, paqueteTuristico, seguro, cantAlumnos) values ('{0}','{1}','{2}','{3}','{4}');".format(nomCurso,
-                                                                                                                                           nomColegio,
-                                                                                                                                           paqueteTuristico,
-                                                                                                                                           seguro,
-                                                                                                                                           cantAlumnos) 
+    sql = "INSERT INTO curso (nomCurso, nomColegio, paqueteTuristico, seguro, cantAlumnos, fechaViaje) values ('{0}','{1}','{2}','{3}','{4}','{5}');".format(nomCurso,
+                                                                                                                                        nomColegio,
+                                                                                                                                        paqueteTuristico,
+                                                                                                                                        seguro,
+                                                                                                                                        cantAlumnos,
+                                                                                                                                        fechaViaje) 
     cursor.execute(sql)
     conexion.connection.commit()
     
     cursoId = cursor.lastrowid
+    nombreDoc = f'contrato_curso_{cursoId}.pdf'
     
-    sql = "INSERT INTO archivo (curso, ruta) VALUES ('{0}','{1}')".format(cursoId, contrato.filename)
+    sql = "INSERT INTO archivo (curso, ruta) VALUES ('{0}','{1}')".format(cursoId, nombreDoc)
     cursor.execute(sql)
-    conexion.connection.commit()
-
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], contrato.filename)
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], nombreDoc)
     contrato.save(file_path)
-
     return cursoId

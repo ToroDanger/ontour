@@ -2,7 +2,7 @@ from flask import jsonify
 import math
 
 def valor_paquete(conexion, paqueteTuristico, cantAlumnos):
-    cursor=conexion.connection.cursor()
+    cursor = conexion.connection.cursor()
     sql = "SELECT totalPaquete FROM paqueteturistico where id = '{0}'".format(paqueteTuristico)
     cursor.execute(sql)
     dato = cursor.fetchone()
