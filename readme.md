@@ -1,4 +1,4 @@
-1) Iniciar Virtual Enviromente
+1) Iniciar Virtual Environment
 
 ```bash
 pip install virtualenv
