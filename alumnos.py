@@ -40,7 +40,33 @@ def get_alumnos(conexion):
             alumnos.append(alumno)
         return jsonify({'alumnos': alumnos, 'mensaje': 'Carga Ok', 'codigo': 200})
     elif(apoderado_param):
-        return 'hola'
+        cursor = conexion.connection.cursor()
+        sql = """SELECT al.id, 
+                        concat(us.nom,' ',us.appat,' ',us.apmat) as apoderado,
+                        al.rut, 
+                        al.nom, 
+                        al.appat, 
+                        al.apmat, 
+                        cu.nomCurso
+                FROM alumno al
+                INNER JOIN user us
+                    ON (al.apoderado = us.id)
+                INNER JOIN curso cu
+                    ON (al.curso = cu.id)
+                WHERE al.apoderado = '{0}' """.format(apoderado_param)
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        alumnos = []
+        for fila in datos:
+            alumno ={'id': fila[0], 
+                   'apoderado': fila[1], 
+                   'rut':fila[2], 
+                   'nom':fila[3], 
+                   'appat':fila[4], 
+                   'apmat':fila[5], 
+                   'curso': fila[6]}
+            alumnos.append(alumno)
+        return jsonify({'alumnos': alumnos, 'mensaje': 'Carga Ok'}), 200
     elif(rut_param):
         return 'hola'
     elif(curso_param):
@@ -76,10 +102,10 @@ def get_alumnos(conexion):
 def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
     cursor=conexion.connection.cursor()
     json_str = xlsx_df.to_json(orient='records', force_ascii=False)
-    alumnos_list = json.loads(json_str)
+    listaAlumnos = json.loads(json_str)
 
-    for alumno in alumnos_list:
-        sql = "INSERT INTO alumno (apoderado, rut, nom, appat, apmat, curso) values ('{0}','{1}','{2}','{3}','{4}','{5}')".format(alumno['Apoderado'],alumno['RUT'],alumno['Nombre'],alumno['Apellido Paterno'],alumno['Apellido Materno'],cursoId)
+    for alumno in listaAlumnos:
+        sql = "INSERT INTO alumno (apoderado, rut, nom, appat, apmat, curso) values ((SELECT id FROM user where rut = '{0}'),'{1}','{2}','{3}','{4}','{5}')".format(alumno['Apoderado'],alumno['RUT'],alumno['Nombre'],alumno['Apellido Paterno'],alumno['Apellido Materno'],cursoId)
         cursor.execute(sql)
         alumnoId = cursor.lastrowid
         fechaCuota = datetime.now()
@@ -91,9 +117,5 @@ def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
             cursor.execute(sql)
             fechaVenc = fechaVenc + relativedelta(months=1)
             fechaCuota = fechaCuota + relativedelta(months=1)
-        conexion.connection.commit()
 
-
-    return alumnos_list
-
-    
+    return listaAlumnos
