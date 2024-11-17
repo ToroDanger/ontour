@@ -55,6 +55,13 @@ VALUES
 ('4°A', 'Colegio Los Andes', 30, 1, 2), 
 ('4°B', 'Colegio Alcantara', 35, 2, 1); 
 
+ALTER TABLE `curso`
+ADD COLUMN `fechaViaje` DATE;
+
+UPDATE `curso`
+SET `fechaViaje` = '2024-12-15' 
+WHERE `id` = 2;
+
 select * from curso;
 
 CREATE TABLE `paqueteTuristico` (
@@ -73,6 +80,11 @@ INSERT INTO `paqueteTuristico` (`nomPaquete`, `totalPaquete`, `hospedaje`, `tran
 VALUES ('Atacama Soñado', 750000, 'Hotel 4 Estrellas', 'Avion', 'Atacama', '2025-12-06', 6);
 
 select * from paqueteTuristico;
+
+ALTER TABLE `paqueteTuristico`
+DROP COLUMN `fecha_ida`,
+DROP COLUMN `cant_noches`;
+
 
 CREATE TABLE `seguro` (
   `id` int PRIMARY KEY auto_increment,
@@ -121,7 +133,10 @@ VALUES
 ('Completado', 20000, 2345678923456789, '2025-11', 456),
 ('Completado', 18000, 3456789034567890, '2024-12', 789),
 ('Pendiente', 22000, 4567890145678901, '2024-09', 321);
+
 select * from pago;
+
+select id as "Nro Pago", montoPago as "Monto Pagado" FROM pago;
 
 CREATE TABLE `pagoCuota` (
   `id` int PRIMARY KEY auto_increment,

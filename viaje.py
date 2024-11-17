@@ -8,9 +8,7 @@ def verInfoViaje(conexion):
                 a.appat AS appatAlumno,
                 c.nomCurso,
                 c.nomColegio,
-                p.ciudad AS destino,
-                p.fecha_ida,
-                p.cant_noches
+                p.ciudad AS destino
         FROM alumno a
         INNER JOIN curso c ON (a.curso = c.id)
         INNER JOIN paqueteTuristico p ON (c.PaqueteTuristico = p.id)
@@ -26,10 +24,8 @@ def verInfoViaje(conexion):
             "appatAlumno": fila[1],    
             "nomCurso": fila[2],        
             "nomColegio": fila[3],       
-            "destino": fila[4]          
-            #"fechaIda": fila[5],        
-            #"cantNoches": fila[6]
+            "destino": fila[4]
         }
         viajes.append(viaje)
 
-    return jsonify({'viajes': viajes, 'mensaje': 'Información del viaje obtenida con éxito'})
+    return jsonify({'viajes': viajes, 'mensaje': 'Info del viaje obtenida con éxito'})

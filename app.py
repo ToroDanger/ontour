@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, send_file
 from flask_mysqldb import MySQL 
-import pagos, alumnos, seguros, cursos, paquetes, viaje
+import pagos, alumnos, seguros, cursos, paquetes, viaje, alumnosXapoderado
 import pandas as pd
 import os
 from config import config
@@ -111,39 +111,16 @@ def agregar_pago():
 
     conexion.connection.commit()
     return "hola"
+
     
 @app.route('/alumnos/apoderado', methods=['GET'])
 def alumnos_apoderado():
-
-    apoderado = request.args.get('apoderado')
-
-    cursor = conexion.connection.cursor()
-    sql = """SELECT 	c.nomCurso,
-                        c.nomColegio,
-                        p.ciudad,
-                        a.rut
-                FROM alumno a
-                INNER JOIN curso c
-                    ON (a.curso = c.id)
-                INNER JOIN paqueteturistico p
-                    ON (c.paqueteTuristico = p.id)
-                WHERE a.apoderado = '{0}';""".format(apoderado)
-    cursor.execute(sql)
-    datos = cursor.fetchall()
-    alumnos = []
-    for fila in datos:
-        alumno = {  "nomCurso":fila[0], 
-                    "nomColegio":fila[1], 
-                    "ciudad":fila[2], 
-                    "rut":fila[3]}
-        alumnos.append(alumno)
-    return jsonify({'alumnos':alumnos, 'mensaje':'Hola Karlita'})
+    return alumnosXapoderado.alumnos_apoderado(conexion)
     
 
 @app.route('/infoViaje', methods=['GET'])
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
-
 
 
 
