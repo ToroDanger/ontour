@@ -3,7 +3,17 @@ import os
 
 def get_curso(conexion):
     cursor=conexion.connection.cursor()
-    sql = "SELECT * FROM curso"
+    sql = """SELECT 	c.id,
+                    c.nomCurso,
+                    c.nomColegio,
+                    c.cantAlumnos,
+                    p.nomPaquete,
+                    s.nomSegu
+            FROM curso c
+            INNER JOIN paqueteturistico p 
+                ON (c.paqueteturistico = p.id)
+            INNER JOIN seguro s
+                ON (s.id = c.seguro);"""
     cursor.execute(sql)
     datos = cursor.fetchall()
     cursos = []
@@ -11,9 +21,9 @@ def get_curso(conexion):
         fila = {'id':fila[0],
                 'nomCurso':fila[1],
                 'nomColegio':fila[2],
-                'paqueteTuristico':fila[3],
-                'seguro':fila[4],
-                'cantAlumnos':fila[5]}
+                'cantAlumnos':fila[3],
+                'nomPaquete':fila[4],
+                'seguro':fila[5]}
         cursos.append(fila)
     return jsonify({'mensajes':'Consulta Ok', 'Cursos':cursos})
     
@@ -27,7 +37,6 @@ def post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,segur
                                                                                                                                         cantAlumnos,
                                                                                                                                         fechaViaje) 
     cursor.execute(sql)
-    conexion.connection.commit()
     
     cursoId = cursor.lastrowid
     nombreDoc = f'contrato_curso_{cursoId}.pdf'

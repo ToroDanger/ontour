@@ -36,7 +36,6 @@ def listar_cursos():
 @app.route('/cursos', methods=['POST'])
 def agregar_curso():
     try:
-
         conexion.connection.begin()
 
         if 'Planilla' not in request.files:
@@ -94,26 +93,26 @@ def agregar_pago():
     cursor = conexion.connection.cursor()
     datos = request.get_json()
 
-    montoPago = datos.get('montoPago')
     nroTarjeta = datos.get('nroTarjeta')
     fecVen = datos.get('fecVec')
     cvv = datos.get('cvv')
 
     cuotas = datos.get('cuotas', [])
-    cuotas = str(tuple(cuotas))
-    sql = "UPDATE cuota SET pagado = 1 WHERE id in {0}".format(cuotas)
+    cuotaStr = str(tuple(cuotas))
+    sql = "UPDATE cuota SET pagado = 1 WHERE id in {0}".format(cuotaStr)
     cursor.execute(sql)
 
-    sql = "INSERT INTO pago (montoPago, nroTarjeta, fecVen, cvv) VALUES ('{0}', '{1}', '{2}', '{3}')".format(montoPago, nroTarjeta, fecVen, cvv)
+    sql = "INSERT INTO pago (montoPago, nroTarjeta, fecVen, cvv) VALUES ((SELECT sum(valorCuota) FROM cuota where id in {0}), '{1}', '{2}', '{3}')".format(cuotaStr, nroTarjeta, fecVen, cvv)
     cursor.execute(sql)
 
     pagoId = cursor.lastrowid
 
+    for cuota in cuotas:
+        sql = "INSERT INTO pagocuota (cuota, pago) VALUES ('{0}','{1}')".format(cuota, pagoId)
+        cursor.execute(sql)
     
-
-
     conexion.connection.commit()
-    return "hola"
+    return jsonify({"Mensaje":"Pago Ingresado Ok"})
     
 @app.route('/alumnos/apoderado', methods=['GET'])
 def alumnos_apoderado():
@@ -121,7 +120,8 @@ def alumnos_apoderado():
     apoderado = request.args.get('apoderado')
 
     cursor = conexion.connection.cursor()
-    sql = """SELECT 	c.nomCurso,
+    sql = """SELECT 	a.id,
+                        c.nomCurso,
                         c.nomColegio,
                         p.ciudad,
                         a.rut
@@ -135,10 +135,11 @@ def alumnos_apoderado():
     datos = cursor.fetchall()
     alumnos = []
     for fila in datos:
-        alumno = {  "nomCurso":fila[0], 
-                    "nomColegio":fila[1], 
-                    "ciudad":fila[2], 
-                    "rut":fila[3]}
+        alumno = {  "alumno":fila[0],
+                    "nomCurso":fila[1], 
+                    "nomColegio":fila[2], 
+                    "ciudad":fila[3], 
+                    "rut":fila[4]}
         alumnos.append(alumno)
     return jsonify({'alumnos':alumnos, 'mensaje':'Hola Karlita'})
     
