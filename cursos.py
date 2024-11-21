@@ -4,16 +4,16 @@ import os
 def get_curso(conexion):
     cursor=conexion.connection.cursor()
     sql = """SELECT 	c.id,
-                    c.nomCurso,
-                    c.nomColegio,
-                    c.cantAlumnos,
-                    p.nomPaquete,
-                    s.nomSegu
-            FROM curso c
-            INNER JOIN paqueteturistico p 
-                ON (c.paqueteturistico = p.id)
-            INNER JOIN seguro s
-                ON (s.id = c.seguro);"""
+                        c.nomCurso,
+                        c.nomColegio,
+                        c.cantAlumnos,
+                        p.nomPaquete,
+                        s.nomSeguro
+                FROM curso c
+                INNER JOIN paqueteturistico p 
+                    ON (c.paqueteturistico = p.id)
+                INNER JOIN seguro s
+                    ON (s.id = c.seguro);"""
     cursor.execute(sql)
     datos = cursor.fetchall()
     cursos = []
@@ -26,7 +26,6 @@ def get_curso(conexion):
                 'seguro':fila[5]}
         cursos.append(fila)
     return jsonify({'mensajes':'Consulta Ok', 'Cursos':cursos})
-    
 
 def post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje):
     cursor=conexion.connection.cursor()

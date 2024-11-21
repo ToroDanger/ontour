@@ -54,7 +54,9 @@ def agregar_curso():
         fechaViaje = request.form.get('fechaViaje')
 
         cursoId = cursos.post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje)
-        valorCuotaAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
+        valorPaqueteAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
+        valorSeguroAlumno = seguro.valor_seguro(conexion, seguro, cantAlumnos)
+        valorCuotaAlumno = (valorPaqueteAlumno + valorSeguroAlumno)
         listaAlumnos = alumnos.cargar_alumnos(conexion=conexion, cursoId=cursoId, xlsx_df=xlsx_df, valorCuotaAlumno=valorCuotaAlumno)
 
         conexion.connection.commit()
@@ -142,7 +144,10 @@ def alumnos_apoderado():
                     "rut":fila[4]}
         alumnos.append(alumno)
     return jsonify({'alumnos':alumnos, 'mensaje':'Hola Karlita'})
-    
+
+@app.route('/paquetes', methods=['GET'])
+def obtener_paquetes():
+    return paquetes.get_paquetes(conexion)
 
 if __name__ == '__main__':
     app.config.from_object(config['development'])

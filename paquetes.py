@@ -10,3 +10,19 @@ def valor_paquete(conexion, paqueteTuristico, cantAlumnos):
     valorCuotaAlumno = math.ceil((valorPaquete / cantAlumnos) / 8)
 
     return valorCuotaAlumno
+
+def get_paquetes(conexion):
+    cursor = conexion.connection.cursor()
+    sql = "SELECT * FROM paqueteturistico"
+    cursor.execute(sql)
+    datos = cursor.fetchall()
+    paquetes = []
+    for fila in datos:
+        paquete = {'id':fila[0],
+                   'nomPaquete':fila[1],
+                   'totalPaquete':fila[2],
+                   'hospedaje':fila[3],
+                   'transporte':fila[4],
+                   'ciudad':fila[5]}
+        paquetes.append(paquete)
+    return jsonify({'paquetes':paquetes,'Mensaje':'Carga Ok'})
