@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request, send_file
-from flask_mysqldb import MySQL 
-import pagos, alumnos, seguros, cursos, paquetes
+from flask_mysqldb import MySQL
+import pagos, alumnos, seguros, cursos, paquetes, login
 import pandas as pd
 import os
 from config import config
+
+
 
 app = Flask(__name__)
 app.config.from_object(config['development'])
@@ -12,6 +14,11 @@ conexion = MySQL(app)
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+@app.route('/login', methods=['POST'])
+def login_get():
+    return login.login()
+
 
 @app.route('/home')
 def home():
