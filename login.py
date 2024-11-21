@@ -7,19 +7,18 @@ from Security import Security
 # Errors
 from CustomException import CustomException
 
-# Database
-from config import DevelopmentConfig
+from app import conexion
+
 
 main = Blueprint('auth_blueprint', __name__)
 
 
-def login(conexion):
-    print(conexion)
+def login():
     mail = request.json['mail']
     password = request.json['password']
 
     _user = User(0, mail, password, "")
-    authenticated_user = AuthService.login_user(_user, conexion)
+    authenticated_user = AuthService.login_user(_user)
 
     if (authenticated_user != None):
         encoded_token = Security.generate_token(authenticated_user)
@@ -34,18 +33,18 @@ def login(conexion):
 class AuthService():
 
     @classmethod
-    def login_user(cls, user,conexion):
+    def login_user(cls, user):
         try:
-            connection = conexion.connection.cursor()
+            sql = conexion.connection.cursor()
             authenticated_user = None
-            with connection.cursor() as cursor:
+            with sql as cursor:
                 cursor.execute('SELECT id, mail, password, rol FROM user WHERE mail = %s AND password = %s', (user.mail, user.password))
                 
                 row = cursor.fetchone()
                 if row != None:
                     authenticated_user = User(int(row[0]), row[1], row[2], row[3])
                     print(row[3])
-            connection.close()
+            cursor.close()
             return authenticated_user
         except CustomException as ex:
             raise CustomException(ex)

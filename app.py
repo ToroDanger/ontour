@@ -17,7 +17,8 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 
 @app.route('/login', methods=['POST'])
 def login_get():
-    return login.login(conexion)
+    return login.login()
+
 
 @app.route('/home')
 def home():
