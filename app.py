@@ -1,7 +1,7 @@
 # Importación de bibliotecas necesarias para la aplicación
 from flask import Flask, jsonify, request, send_file # Para manejar solicitudes y respuestas HTTP
 from flask_mysqldb import MySQL # Para conectar con MySQL
-import pagos, alumnos, seguros, cursos, paquetes, viaje, alumnosXapoderado # Módulos personalizados donde tengo métodos
+import pagos, alumnos, seguros, cursos, paquetes, viaje, alumnosXapoderado, resumenPagos # Módulos personalizados donde tengo métodos
 import pandas as pd # Para manejar datos en formato Excel
 import os
 from config import config
@@ -129,6 +129,35 @@ def agregar_pago():
     conexion.connection.commit()
     return "hola"
 
+"""
+# Ruta para agregar un pago   
+@app.route('/pagos', methods=['POST'])
+def agregar_pago(): #este metodo es una opcion para insertar un pago sin riesgo de inyección SQL 
+    cursor = conexion.connection.cursor()
+    datos = request.get_json()  # Obtiene los datos JSON de la solicitud
+
+    montoPago = datos.get('montoPago')
+    nroTarjeta = datos.get('nroTarjeta')
+    fecVen = datos.get('fecVen')
+    cvv = datos.get('cvv')
+
+    # Procesa las cuotas asociadas
+    cuotas = datos.get('cuotas', [])
+    # Usa un placeholder para las cuotas
+    sql = "UPDATE cuota SET pagado = 1 WHERE id IN (%s)"  # Aquí usamos un placeholder
+    cursor.execute(sql, (','.join(str(cuota) for cuota in cuotas),))
+
+    # Inserta el registro del pago en la base de datos
+    sql = "INSERT INTO pago (montoPago, nroTarjeta, fecVen, cvv) VALUES (%s, %s, %s, %s)"
+    cursor.execute(sql, (montoPago, nroTarjeta, fecVen, cvv))
+
+    pagoId = cursor.lastrowid  # Obtiene el ID del último pago insertado
+
+    # Confirma los cambios
+    conexion.connection.commit()
+    return "Pago registrado con éxito"
+
+"""
 
 # Ruta para listar alumnos por apoderado
 @app.route('/alumnos/apoderado', methods=['GET'])
@@ -139,6 +168,12 @@ def alumnos_apoderado():
 @app.route('/infoViaje', methods=['GET'])
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
+
+# Ruta para que el apoderado vea Info Resumen de Pagos
+@app.route('/resumen-pagos', methods=['GET'])
+def resumen_pagos():
+    return resumenPagos.resumen_pagos(conexion)
+
 
 
 # Punto de entrada de la aplicación

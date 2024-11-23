@@ -81,9 +81,6 @@ VALUES ('Atacama Soñado', 750000, 'Hotel 4 Estrellas', 'Avion', 'Atacama', '202
 
 select * from paqueteTuristico;
 
-ALTER TABLE `paqueteTuristico`
-DROP COLUMN `fecha_ida`,
-DROP COLUMN `cant_noches`;
 
 
 CREATE TABLE `seguro` (
@@ -116,7 +113,12 @@ VALUES
 (1, '2024-01-10 10:00:00', '2024-02-10 10:00:00', 15000, FALSE, FALSE),
 (2, '2024-01-15 10:00:00', '2024-02-15 10:00:00', 20000, TRUE, FALSE),
 (3, '2024-01-20 10:00:00', '2024-02-20 10:00:00', 18000, TRUE, FALSE), 
-(4, '2024-01-25 10:00:00', '2024-02-25 10:00:00', 22000, FALSE, TRUE);  
+(4, '2024-01-25 10:00:00', '2024-02-25 10:00:00', 22000, FALSE, TRUE),
+(2, '2024-01-24 10:00:00', '2024-02-25 10:00:00', 20000, TRUE, FALSE), 
+(2, '2024-01-24 10:00:00', '2024-02-25 10:00:00', 22000, FALSE, TRUE),
+(2, '2024-01-24 10:00:00', '2024-02-25 10:00:00', 22000, FALSE, FALSE); 
+
+
 select * from cuota;
 
 CREATE TABLE `pago` (
@@ -133,6 +135,9 @@ VALUES
 ('Completado', 20000, 2345678923456789, '2025-11', 456),
 ('Completado', 18000, 3456789034567890, '2024-12', 789),
 ('Pendiente', 22000, 4567890145678901, '2024-09', 321);
+
+ALTER TABLE `pago`
+DROP COLUMN `estadoPago`;
 
 select * from pago;
 
@@ -172,3 +177,58 @@ ALTER TABLE `pagoCuota` ADD FOREIGN KEY (`pago`) REFERENCES `pago` (`id`);
 ALTER TABLE `pagoCuota` ADD FOREIGN KEY (`cuota`) REFERENCES `cuota` (`id`);
 
 ALTER TABLE `archivo` ADD FOREIGN KEY (`curso`) REFERENCES `curso` (`id`);
+
+
+
+
+--query para obtener la suma del valor total del paquete mas el valor total del seguro (Total a pagar para todo el curso)
+SELECT 
+    CONCAT('$', FORMAT((p.totalPaquete + s.valorSeguro), 0)) AS 'Total a Pagar por Curso'
+FROM 
+    curso c
+INNER JOIN 
+    paqueteTuristico p
+    ON c.PaqueteTuristico = p.id
+INNER JOIN 
+    seguro s
+    ON c.seguro = s.id
+WHERE 
+    c.id = 1;
+
+--query para obtener el total a pagar por cada Alumno
+SELECT 
+	CONCAT('$', FORMAT((p.totalPaquete + s.valorSeguro) / c.cantAlumnos, 0)) AS 'Total a Pagar por Alumno'
+FROM 
+    curso c
+INNER JOIN 
+    paqueteTuristico p
+    ON c.PaqueteTuristico = p.id
+INNER JOIN 
+    seguro s
+    ON c.seguro = s.id
+WHERE 
+    c.id = 1;
+    
+--query para obtener la suma de todos los pagos que se han realizado para ese alumno
+SELECT 
+	SUM(c.valorCuota) AS 'Total Pagado'
+FROM 
+    cuota c
+WHERE 
+    c.alumnoCuota = 2
+    AND c.pagado = TRUE;
+
+--query para obtener la suma de todas las cuotas que faltan por pagar
+SELECT 
+    CONCAT('$', FORMAT(SUM(valorCuota), 0)) AS 'Saldo por Pagar'
+FROM 
+    cuota
+WHERE 
+    alumnoCuota = 2 
+    AND pagado = FALSE 
+    AND fechaVenc < NOW();
+
+
+    
+    
+    
