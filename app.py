@@ -1,7 +1,8 @@
 # Importación de bibliotecas necesarias para la aplicación
 from flask import Flask, jsonify, request, send_file # Para manejar solicitudes y respuestas HTTP
 from flask_mysqldb import MySQL # Para conectar con MySQL
-import pagos, alumnos, seguros, cursos, paquetes, viaje, alumnosXapoderado, resumenPagos # Módulos personalizados donde tengo métodos
+import pagos, alumnos, seguros, cursos, paquetes, viaje, alumnosXapoderado, resumenPagos
+ # Módulos personalizados donde tengo métodos
 import pandas as pd # Para manejar datos en formato Excel
 import os
 from config import config
@@ -169,11 +170,28 @@ def alumnos_apoderado():
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
 
-# Ruta para que el apoderado vea Info Resumen de Pagos
+# Ruta para que el apoderado vea Info de Resumen de Pagos
 @app.route('/resumen-pagos', methods=['GET'])
 def resumen_pagos():
-    return resumenPagos.resumen_pagos(conexion)
+    # Obtener los parámetros desde la URL
+    curso_id = request.args.get('curso_id')
+    alumno_id = request.args.get('alumno_id')
 
+    # Llamar a las funciones correspondientes
+    total_a_pagar = resumenPagos.total_a_pagar_por_curso(conexion, curso_id)
+    total_a_pagar_alumno = resumenPagos.total_a_pagar_por_alumno(conexion, curso_id)
+    total_pagado = resumenPagos.total_pagado_por_alumno(conexion, alumno_id)
+    saldo_pagar = resumenPagos.saldo_por_pagar(conexion, alumno_id)
+
+    # Construir la respuesta combinada
+    response = {
+        'total_a_pagar_por_curso': total_a_pagar,
+        'total_a_pagar_por_alumno': total_a_pagar_alumno,
+        'total_pagado_por_alumno': total_pagado,
+        'saldo_por_pagar': saldo_pagar
+    }
+
+    return jsonify(response)
 
 
 # Punto de entrada de la aplicación
