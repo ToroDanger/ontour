@@ -229,6 +229,12 @@ WHERE
     AND fechaVenc < NOW();
 
 
-    
-    
-    
+SELECT a.nom AS nomAlumno,
+                CONCAT(a.appat,' ',a.appat) AS Alumno,
+                c.nomCurso,
+                c.nomColegio,
+                p.ciudad AS destino
+        FROM alumno a
+        INNER JOIN curso c ON (a.curso = c.id)
+        INNER JOIN paqueteTuristico p ON (c.PaqueteTuristico = p.id)
+        WHERE a.id = 2;
