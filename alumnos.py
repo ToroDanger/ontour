@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+from rutpy import validate
 
 def get_alumnos(conexion):
     id_param = request.args.get('id')
@@ -105,6 +105,9 @@ def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
     listaAlumnos = json.loads(json_str)
 
     for alumno in listaAlumnos:
+        if not validate(alumno['RUT']):
+            raise ValueError(f"RUT invalido encontrado: {alumno['RUT']}")
+
         sql = "INSERT INTO alumno (apoderado, rut, nom, appat, apmat, curso) values ((SELECT id FROM user where rut = '{0}'),'{1}','{2}','{3}','{4}','{5}')".format(alumno['Apoderado'],alumno['RUT'],alumno['Nombre'],alumno['Apellido Paterno'],alumno['Apellido Materno'],cursoId)
         cursor.execute(sql)
         alumnoId = cursor.lastrowid

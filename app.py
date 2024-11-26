@@ -6,7 +6,6 @@ import os
 from config import config
 
 
-
 app = Flask(__name__)
 app.config.from_object(config['development'])
 
@@ -18,7 +17,6 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 @app.route('/login', methods=['POST'])
 def login_get():
     return login.login()
-
 
 @app.route('/home')
 def home():
@@ -62,13 +60,17 @@ def agregar_curso():
 
         cursoId = cursos.post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje)
         valorPaqueteAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
-        valorSeguroAlumno = seguro.valor_seguro(conexion, seguro, cantAlumnos)
+        valorSeguroAlumno = seguros.valor_seguro(conexion, seguro, cantAlumnos)
         valorCuotaAlumno = (valorPaqueteAlumno + valorSeguroAlumno)
         listaAlumnos = alumnos.cargar_alumnos(conexion=conexion, cursoId=cursoId, xlsx_df=xlsx_df, valorCuotaAlumno=valorCuotaAlumno)
 
         conexion.connection.commit()
 
         return f'Se ha creado el curso {nomCurso}, se han cargado {len(listaAlumnos)} alumnos'
+    except ValueError as e:
+        conexion.connection.rollback()
+        print(e)
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         conexion.connection.rollback()
         print(e)

@@ -9,9 +9,7 @@ from CustomException import CustomException
 
 from app import conexion
 
-
 main = Blueprint('auth_blueprint', __name__)
-
 
 def login():
     mail = request.json['mail']
