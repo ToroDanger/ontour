@@ -5,6 +5,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from rutpy import validate
 
+
+#Esta función recupera información de los alumnos desde la base de datos. 
+#Filtra según parámetros opcionales (id, apoderado, rut, curso) y devuelve un JSON con los datos
 def get_alumnos(conexion):
     id_param = request.args.get('id')
     apoderado_param = request.args.get('apoderado')
@@ -31,12 +34,12 @@ def get_alumnos(conexion):
         alumnos = []
         for fila in datos:
             alumno ={'id': fila[0], 
-                   'apoderado': fila[1], 
-                   'rut':fila[2], 
-                   'nom':fila[3], 
-                   'appat':fila[4], 
-                   'apmat':fila[5], 
-                   'curso': fila[6]}
+                    'apoderado': fila[1],
+                    'rut':fila[2],
+                    'nom':fila[3],
+                    'appat':fila[4],
+                    'apmat':fila[5],
+                    'curso': fila[6]}
             alumnos.append(alumno)
         return jsonify({'alumnos': alumnos, 'mensaje': 'Carga Ok', 'codigo': 200})
     elif(apoderado_param):
@@ -59,12 +62,12 @@ def get_alumnos(conexion):
         alumnos = []
         for fila in datos:
             alumno ={'id': fila[0], 
-                   'apoderado': fila[1], 
-                   'rut':fila[2], 
-                   'nom':fila[3], 
-                   'appat':fila[4], 
-                   'apmat':fila[5], 
-                   'curso': fila[6]}
+                    'apoderado': fila[1], 
+                    'rut':fila[2], 
+                    'nom':fila[3], 
+                    'appat':fila[4], 
+                    'apmat':fila[5], 
+                    'curso': fila[6]}
             alumnos.append(alumno)
         return jsonify({'alumnos': alumnos, 'mensaje': 'Carga Ok'}), 200
     elif(rut_param):
@@ -90,12 +93,12 @@ def get_alumnos(conexion):
         alumnos = []
         for fila in datos:
             alumno ={'id': fila[0], 
-                   'apoderado': fila[1], 
-                   'rut':fila[2], 
-                   'nom':fila[3], 
-                   'appat':fila[4], 
-                   'apmat':fila[5], 
-                   'curso': fila[6]}
+                    'apoderado': fila[1], 
+                    'rut':fila[2], 
+                    'nom':fila[3], 
+                    'appat':fila[4], 
+                    'apmat':fila[5], 
+                    'curso': fila[6]}
             alumnos.append(alumno)
         return jsonify({'alumnos': alumnos, 'mensaje': 'Carga Ok'}), 200
     

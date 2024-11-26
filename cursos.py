@@ -26,6 +26,7 @@ def get_curso(conexion):
                 'seguro':fila[5]}
         cursos.append(fila)
     return jsonify({'mensajes':'Consulta Ok', 'Cursos':cursos})
+    
 
 def post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje):
     cursor=conexion.connection.cursor()
