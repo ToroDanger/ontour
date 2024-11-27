@@ -15,7 +15,7 @@ def login():
     mail = request.json['mail']
     password = request.json['password']
 
-    _user = User(0, mail, password, "")
+    _user = User(0, mail, password)
     authenticated_user = AuthService.login_user(_user)
 
     if (authenticated_user != None):
@@ -36,13 +36,23 @@ class AuthService():
             sql = conexion.connection.cursor()
             authenticated_user = None
             with sql as cursor:
-                cursor.execute('SELECT id, mail, password, rol FROM user WHERE mail = %s AND password = %s', (user.mail, user.password))
-                
+                cursor.execute('SELECT id, mail, password FROM user WHERE mail = %s AND password = %s', (user.mail, user.password))
                 row = cursor.fetchone()
                 if row != None:
-                    authenticated_user = User(int(row[0]), row[1], row[2], row[3])
-                    print(row[3])
+                    authenticated_user = User(int(row[0]), row[1], row[2])
+                    
             cursor.close()
             return authenticated_user
         except CustomException as ex:
             raise CustomException(ex)
+        
+    
+@main.route('/')
+def validar():
+    has_access = Security.verify_token(request.headers)
+    if has_access:
+        return jsonify({'message': "SUCCESS", 'success': True})
+    else:
+        response = jsonify({'message': 'Unauthorized', 'success': False})
+        return response, 401
+

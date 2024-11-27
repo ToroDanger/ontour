@@ -1,8 +1,6 @@
 class User():
 
-    def __init__(self, id, mail, password, rol) -> None:
+    def __init__(self, id, mail, password) -> None:
         self.id = id
         self.mail = mail
         self.password = password
-        self.rol = rol
-
