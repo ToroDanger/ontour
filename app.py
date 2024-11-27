@@ -1,10 +1,9 @@
 from flask import Flask, jsonify, request, send_file
 from flask_mysqldb import MySQL
-import pagos, alumnos, seguros, cursos, paquetes, login
-import pandas as pd
+import pagos, alumnos, seguros, cursos, paquetes, viaje, login, apoderado
+import pandas as pd 
 import os
 from config import config
-
 
 
 app = Flask(__name__)
@@ -12,6 +11,7 @@ app.config.from_object(config['development'])
 
 conexion = MySQL(app)
 
+# Crear la carpeta de almacenamiento si no existe
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -19,30 +19,31 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def login_get():
     return login.login()
 
-@app.route('/validar', methods=['POST'])
-def verificartoken():
-    return login.validar()
-
 @app.route('/home')
 def home():
     return jsonify({"message":"Bienvenido a mi BackEnd"})
 
+# Ruta para listar pagos
 @app.route('/pagos', methods=['GET'])
 def listar_pagos():
-    return pagos.get_pagos(conexion)
-    
+    return pagos.get_pagos(conexion) # Llama al método en el módulo pagos para obtener los datos de pagos
+
+# Ruta para listar alumnos    
 @app.route('/alumnos', methods=['GET'])
 def lista_alumnos():
     return alumnos.get_alumnos(conexion)
 
+# Ruta para listar seguros
 @app.route('/seguros', methods=['GET'])
 def listar_seguro():
     return seguros.get_seguros(conexion)
 
+# Ruta para listar cursos
 @app.route('/cursos', methods=['GET'])
 def listar_cursos():
     return cursos.get_curso(conexion)
 
+# Ruta para agregar un nuevo curso
 @app.route('/cursos', methods=['POST'])
 def agregar_curso():
     try:
@@ -51,28 +52,35 @@ def agregar_curso():
         if 'Planilla' not in request.files:
             return jsonify({'error': 'No se ha enviado un archivo'}), 400
         if 'contrato' not in request.files:
-            return jsonify({'error': 'No se ha enviado un archivo'}), 400 
+            return jsonify({'error': 'No se ha cargado contrato'}), 400 
 
         Planilla = request.files['Planilla']
         contrato = request.files['contrato']
-        xlsx_df = pd.read_excel(Planilla, sheet_name='Alumnos')
+        alumnos_df = pd.read_excel(Planilla, sheet_name='Alumnos')
+        apoderado_df = pd.read_excel(Planilla, sheet_name='Apoderados')
         nomCurso = request.form.get('nomCurso')
         nomColegio = request.form.get('nomColegio')
         paqueteTuristico = request.form.get('paqueteTuristico')
         seguro = request.form.get('seguro')
-        cantAlumnos = len(xlsx_df)
+        cantAlumnos = len(alumnos_df)
         fechaViaje = request.form.get('fechaViaje')
 
+        apoderado.cargar_apoderado(conexion=conexion, xlsx_df=apoderado_df)
+
         cursoId = cursos.post_curso(conexion, contrato, nomCurso ,nomColegio ,paqueteTuristico ,seguro ,cantAlumnos, app, fechaViaje)
-        valorCuotaAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
-        listaAlumnos = alumnos.cargar_alumnos(conexion=conexion, cursoId=cursoId, xlsx_df=xlsx_df, valorCuotaAlumno=valorCuotaAlumno)
+        valorPaqueteAlumno = paquetes.valor_paquete(conexion, paqueteTuristico, cantAlumnos)
+        valorSeguroAlumno = seguros.valor_seguro(conexion, seguro, cantAlumnos)
+        valorCuotaAlumno = (valorPaqueteAlumno + valorSeguroAlumno)
+        listaAlumnos = alumnos.cargar_alumnos(conexion=conexion, cursoId=cursoId, xlsx_df=alumnos_df, valorCuotaAlumno=valorCuotaAlumno)
 
         conexion.connection.commit()
 
         return f'Se ha creado el curso {nomCurso}, se han cargado {len(listaAlumnos)} alumnos'
+    except ValueError as e:
+        conexion.connection.rollback()
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         conexion.connection.rollback()
-        print(e)
         return 'Error en la carga de Datos, favor validar datos a cargar o archivo Excel'
         
 
@@ -152,8 +160,18 @@ def alumnos_apoderado():
                     "rut":fila[4]}
         alumnos.append(alumno)
     return jsonify({'alumnos':alumnos, 'mensaje':'Hola Karlita'})
-    
 
+@app.route('/paquetes', methods=['GET'])
+def obtener_paquetes():
+    return paquetes.get_paquetes(conexion)
+    
+# Ruta para ver la información de viaje
+@app.route('/infoViaje', methods=['GET'])
+def verInfoViaje():
+    return viaje.verInfoViaje(conexion)
+
+
+# Punto de entrada de la aplicación
 if __name__ == '__main__':
     app.config.from_object(config['development'])
     app.run()
