@@ -125,3 +125,33 @@ def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
             fechaCuota = fechaCuota + relativedelta(months=1)
 
     return listaAlumnos
+
+def obtener_alumno_por_id(conexion, id_param):
+    cursor = conexion.connection.cursor()
+    sql = """SELECT al.id, 
+                    concat(us.nom,' ',us.appat,' ',us.apmat) as apoderado,
+                    al.rut, 
+                    al.nom, 
+                    al.appat, 
+                    al.apmat, 
+                    cu.nomCurso
+            FROM alumno al
+            INNER JOIN user us ON (al.apoderado = us.id)
+            INNER JOIN curso cu ON (al.curso = cu.id)
+            WHERE al.id = %s"""
+    cursor.execute(sql, (id_param,))
+    datos = cursor.fetchone()
+
+    if datos:
+        alumno = {
+            'id': datos[0],
+            'apoderado': datos[1],
+            'rut': datos[2],
+            'nom': datos[3],
+            'appat': datos[4],
+            'apmat': datos[5],
+            'curso': datos[6]
+        }
+        return alumno
+    else:
+        return None

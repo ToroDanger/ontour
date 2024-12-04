@@ -4,12 +4,17 @@ import pagos, alumnos, seguros, cursos, paquetes, viaje, login, apoderado
 import pandas as pd 
 import os
 from config import config
+from flask_cors import CORS
 
 
 app = Flask(__name__)
 app.config.from_object(config['development'])
 
 conexion = MySQL(app)
+
+CORS(app)
+CORS(app, resources={r"/login": {"origins": "http://127.0.0.1:5501"}})
+
 
 # Crear la carpeta de almacenamiento si no existe
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -35,7 +40,18 @@ def listar_pagos():
 # Ruta para listar alumnos    
 @app.route('/alumnos', methods=['GET'])
 def lista_alumnos():
-    return alumnos.get_alumnos(conexion)
+    id_param = request.args.get('id')
+    if id_param:
+        # Llama a la función obtener_alumno_por_id con el ID proporcionado
+        alumno = alumnos.obtener_alumno_por_id(conexion, id_param)
+        if alumno:
+            return jsonify({'alumno': alumno})
+        else:
+            return jsonify({'error': 'Alumno no encontrado'}), 404
+    else:
+        # Si no se proporciona el ID, devuelve todos los alumnos
+        return alumnos.get_alumnos(conexion)
+
 
 # Ruta para listar seguros
 @app.route('/seguros', methods=['GET'])
@@ -165,6 +181,35 @@ def alumnos_apoderado():
         alumnos.append(alumno)
     return jsonify({'alumnos':alumnos, 'mensaje':'Hola Karlita'})
 
+@app.route('/pefilApode', methods=['GET'])
+def info_perfil():
+
+    apoderado = request.json.get('id')
+    print("ID recibido:", apoderado)
+
+    cursor = conexion.connection.cursor()
+    sql = """SELECT 	u.id,
+                u.nom,
+                u.mail,
+                a.nom,
+                a.rut
+         FROM user u
+         INNER JOIN alumno a ON u.id = a.apoderado
+         WHERE a.id = '{0}';""".format(apoderado)
+
+    cursor.execute(sql)
+    datos = cursor.fetchall()
+    apoderados = []
+    for fila in datos:
+        fila = {  "id":fila[0],
+                    "nom":fila[1], 
+                    "mail":fila[2], 
+                    "nomAlum":fila[3], 
+                    "rutAlum":fila[4]}
+        apoderados.append(fila)
+        
+    return jsonify({'apoderados':apoderados})
+
 @app.route('/paquetes', methods=['GET'])
 def obtener_paquetes():
     return paquetes.get_paquetes(conexion)
@@ -173,6 +218,7 @@ def obtener_paquetes():
 @app.route('/infoViaje', methods=['GET'])
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
+
 
 
 # Punto de entrada de la aplicación
