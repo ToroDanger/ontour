@@ -30,7 +30,7 @@ def verificartoken():
 
 @app.route('/home')
 def home():
-    return jsonify({"message":"Bienvenido a mi BackEnd"})
+    return jsonify({"message":"Bienvenido a mi BackEnd finallll"})
 
 # Ruta para listar pagos
 @app.route('/pagos', methods=['GET'])
@@ -102,7 +102,8 @@ def agregar_curso():
     except Exception as e:
         conexion.connection.rollback()
         return 'Error en la carga de Datos, favor validar datos a cargar o archivo Excel'
-        
+          
+
 
 @app.route('/archivos', methods=['GET'])
 def lista_doc():

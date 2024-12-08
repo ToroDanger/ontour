@@ -106,11 +106,9 @@ def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
     cursor=conexion.connection.cursor()
     json_str = xlsx_df.to_json(orient='records', force_ascii=False)
     listaAlumnos = json.loads(json_str)
-
     for alumno in listaAlumnos:
-        if not validate(alumno['RUT']):
-            raise ValueError(f"RUT invalido encontrado: {alumno['RUT']}")
-
+        # if not validate(alumno['RUT']):
+        #     raise ValueError(f"RUT invalido encontrado: {alumno['RUT']}")
         sql = "INSERT INTO alumno (apoderado, rut, nom, appat, apmat, curso) values ((SELECT id FROM user where rut = '{0}'),'{1}','{2}','{3}','{4}','{5}')".format(alumno['Apoderado'],alumno['RUT'],alumno['Nombre'],alumno['Apellido Paterno'],alumno['Apellido Materno'],cursoId)
         cursor.execute(sql)
         alumnoId = cursor.lastrowid
@@ -120,11 +118,14 @@ def cargar_alumnos(conexion, cursoId, xlsx_df, valorCuotaAlumno):
             fechaCuotaFor = fechaCuota.strftime('%Y-%m-%d %H:%M:%S')
             fechaVencFor = fechaVenc.strftime('%Y-%m-%d %H:%M:%S')
             sql = "INSERT INTO cuota (alumnoCuota, fechaCuota, fechaVenc, valorCuota, pagado, vencido) VALUES ('{0}', '{1}', '{2}', '{3}', 0, 0)".format(alumnoId, fechaCuotaFor, fechaVencFor, valorCuotaAlumno)
+
             cursor.execute(sql)
+            
             fechaVenc = fechaVenc + relativedelta(months=1)
             fechaCuota = fechaCuota + relativedelta(months=1)
-
+        
     return listaAlumnos
+    
 
 def obtener_alumno_por_id(conexion, id_param):
     cursor = conexion.connection.cursor()
