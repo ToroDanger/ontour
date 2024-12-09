@@ -104,7 +104,7 @@ def agregar_curso():
         return 'Error en la carga de Datos, favor validar datos a cargar o archivo Excel'
           
 
-
+#ruta para traer los datos de los pdf
 @app.route('/archivos', methods=['GET'])
 def lista_doc():
     cursor=conexion.connection.cursor()
@@ -220,6 +220,60 @@ def obtener_paquetes():
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
 
+
+@app.route('/cuotas_curso/<int:curso_id>', methods=['GET'])
+def cuotas_curso(curso_id):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """
+            SELECT 
+                c.id AS cuota_id,
+                a.rut AS alumno_rut,
+                c.valorCuota,
+                c.fechaCuota,
+                c.pagado
+            FROM cuota c
+            INNER JOIN alumno a ON c.alumnoCuota = a.id
+            WHERE a.curso = %s"""
+        cursor.execute(sql, (curso_id,))
+        cuotas = cursor.fetchall()
+        
+        if not cuotas:
+            return jsonify({'mensaje': 'No se encontraron cuotas para este curso', 'estado': 'sin datos'}), 404
+
+        total_cuotas = len(cuotas)
+        total_valor = sum(cuota[2] for cuota in cuotas)
+        pagadas = [cuota for cuota in cuotas if cuota[4] == 1]
+        pendientes = [cuota for cuota in cuotas if cuota[4] == 0]
+        total_pagado = sum(cuota[2] for cuota in pagadas)
+        total_pendiente = total_valor - total_pagado
+
+        porcentaje_avance = (total_pagado / total_valor) * 100 if total_valor > 0 else 0
+
+        return jsonify({
+            'total_valor': total_valor,
+            'total_pagado': total_pagado,
+            'total_pendiente': total_pendiente,
+            'porcentaje_avance': round(porcentaje_avance, 2),
+            'detalle_pagadas': [
+                {
+                    'cuota_id': cuota[0],
+                    'alumno_rut': cuota[1],
+                    'valor': cuota[2],
+                    'fecha_cuota': cuota[3].strftime('%Y-%m-%d')
+                } for cuota in pagadas
+            ],
+            'detalle_pendientes': [
+                {
+                    'cuota_id': cuota[0],
+                    'alumno_rut': cuota[1],
+                    'valor': cuota[2],
+                    'fecha_cuota': cuota[3].strftime('%Y-%m-%d')
+                } for cuota in pendientes
+            ],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # Punto de entrada de la aplicación
