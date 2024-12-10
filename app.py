@@ -103,7 +103,6 @@ def agregar_curso():
         conexion.connection.rollback()
         return 'Error en la carga de Datos, favor validar datos a cargar o archivo Excel'
         
-
 @app.route('/archivos', methods=['GET'])
 def lista_doc():
     apoderado_id = request.args.get('apoderado')  # Obtener el id del apoderado desde los parámetros de la consulta
@@ -134,8 +133,6 @@ def lista_doc():
     else:
         return jsonify({'error': 'No se proporcionó el id del apoderado'}), 400
 
-
-
 #ruta para traer los datos de los pdf
 @app.route('/archivo', methods=['GET'])
 def lista_docc():
@@ -159,33 +156,54 @@ def get_pdf(filename):
     except FileNotFoundError:
         return jsonify({'error': 'Archivo no encontrado'}), 404
 
-    
 @app.route('/pagos', methods=['POST'])
 def agregar_pago():
-    cursor = conexion.connection.cursor()
-    datos = request.get_json()
+    try:
+        cursor = conexion.connection.cursor()
+        datos = request.get_json()
 
-    nroTarjeta = datos.get('nroTarjeta')
-    fecVen = datos.get('fecVec')
-    cvv = datos.get('cvv')
+        nroTarjeta = datos.get('nroTarjeta')
+        fecVen = datos.get('fecVec')
+        cvv = datos.get('cvv')
+        cuotas = datos.get('cuotas', [])
 
-    cuotas = datos.get('cuotas', [])
-    cuotaStr = str(tuple(cuotas))
-    sql = "UPDATE cuota SET pagado = 1 WHERE id in {0}".format(cuotaStr)
-    cursor.execute(sql)
+        if not cuotas:
+            return jsonify({"error": "No se seleccionaron cuotas para el pago"}), 400
 
-    sql = "INSERT INTO pago (montoPago, nroTarjeta, fecVen, cvv) VALUES ((SELECT sum(valorCuota) FROM cuota where id in {0}), '{1}', '{2}', '{3}')".format(cuotaStr, nroTarjeta, fecVen, cvv)
-    cursor.execute(sql)
+        # Asegurarse de que cuotaStr tiene el formato correcto (ejemplo: (1, 2, 3))
+        cuotaStr = tuple(cuotas)
+        if len(cuotaStr) == 0:
+            return jsonify({"error": "Las cuotas no tienen datos válidos"}), 400
 
-    pagoId = cursor.lastrowid
-
-    for cuota in cuotas:
-        sql = "INSERT INTO pagocuota (cuota, pago) VALUES ('{0}','{1}')".format(cuota, pagoId)
+        sql = "UPDATE cuota SET pagado = 1 WHERE id IN {}".format(cuotaStr)
+        print("Consulta SQL de actualización de cuotas:", sql)  # Depuración
         cursor.execute(sql)
-    
-    conexion.connection.commit()
-    return jsonify({"Mensaje":"Pago Ingresado Ok"})
-    
+
+        # Insertar pago
+        sql = """
+            INSERT INTO pago (montoPago, nroTarjeta, fecVen, cvv)
+            VALUES ((SELECT SUM(valorCuota) FROM cuota WHERE id IN {}), '{}', '{}', '{}')
+        """.format(cuotaStr, nroTarjeta, fecVen, cvv)
+        print("Consulta SQL de inserción de pago:", sql)  # Depuración
+        cursor.execute(sql)
+
+        # Obtener el ID del pago insertado
+        pagoId = cursor.lastrowid
+
+        # Insertar relaciones entre cuota y pago
+        for cuota in cuotas:
+            sql = "INSERT INTO pagocuota (cuota, pago) VALUES ('{}', '{}')".format(cuota, pagoId)
+            print("Consulta SQL de inserción de relación cuota-pago:", sql)  # Depuración
+            cursor.execute(sql)
+
+        # Confirmar cambios en la base de datos
+        conexion.connection.commit()
+
+        return jsonify({"Mensaje": "Pago ingresado correctamente"}), 200
+    except Exception as e:
+        print("Error en el proceso de pago:", str(e))  # Depuración
+        return jsonify({"error": f"Error en el proceso de pago: {str(e)}"}), 500    
+
 @app.route('/alumnos/apoderado', methods=['GET'])
 def alumnos_apoderado():
 
@@ -308,6 +326,45 @@ def cuotas_curso(curso_id):
                     'fecha_cuota': cuota[3].strftime('%Y-%m-%d')
                 } for cuota in pendientes
             ],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/cuotas_alumno/<int:curso_id>', methods=['GET'])
+def cuotas_alumno(curso_id):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """
+            SELECT 
+                c.id AS cuota_id,
+                a.rut AS alumno_rut,
+                c.valorCuota,
+                c.fechaCuota,
+                c.pagado
+            FROM cuota c
+            INNER JOIN alumno a ON c.alumnoCuota = a.id
+            WHERE a.curso = %s"""
+        cursor.execute(sql, (curso_id,))
+        cuotas = cursor.fetchall()
+
+        if not cuotas:
+            return jsonify({'mensaje': 'No se encontraron cuotas para este curso', 'estado': 'sin datos'}), 404
+
+        total_cuotas = len(cuotas)
+        total_valor = sum(cuota[2] for cuota in cuotas)
+        pagadas = [cuota for cuota in cuotas if cuota[4] == 1]
+        pendientes = [cuota for cuota in cuotas if cuota[4] == 0]
+        total_pagado = sum(cuota[2] for cuota in pagadas)
+        total_pendiente = total_valor - total_pagado
+
+        porcentaje_avance = (total_pagado / total_valor) * 100 if total_valor > 0 else 0
+
+        return jsonify({
+            'total_valor': total_valor,
+            'total_pagado': total_pagado,
+            'total_pendiente': total_pendiente,
+            'porcentaje_avance': round(porcentaje_avance, 2)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
