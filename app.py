@@ -106,17 +106,34 @@ def agregar_curso():
 
 @app.route('/archivos', methods=['GET'])
 def lista_doc():
-    cursor=conexion.connection.cursor()
-    sql = "SELECT * FROM archivo"
-    cursor.execute(sql)
-    datos = cursor.fetchall()
-    archivos = []
-    for fila in datos:
-        fila = {'id':fila[0],
-                'curso':fila[1],
-                'nombre':fila[2]}
-        archivos.append(fila)
-    return jsonify({'archivos':archivos})
+    apoderado_id = request.args.get('apoderado')  # Obtener el id del apoderado desde los parámetros de la consulta
+
+    if apoderado_id:
+        cursor = conexion.connection.cursor()
+        # Filtrar los documentos por el id del apoderado
+        sql = f"""SELECT
+                    * 
+                FROM
+                    archivo a INNER JOIN curso c
+                        ON a.curso = c.id
+                INNER JOIN alumno al
+                    ON c.id = al.curso
+                WHERE
+                    al.id =  '{apoderado_id}'"""
+        
+        cursor.execute(sql)
+        datos = cursor.fetchall()
+        
+        archivos = []
+        for fila in datos:
+            archivo = {'id': fila[0], 'curso': fila[1], 'nombre': fila[2]}
+            archivos.append(archivo)
+
+        return jsonify({'archivos': archivos})
+
+    else:
+        return jsonify({'error': 'No se proporcionó el id del apoderado'}), 400
+
 
 @app.route('/get_pdf/<filename>', methods=['GET'])
 def get_pdf(filename):
@@ -125,6 +142,7 @@ def get_pdf(filename):
         return send_file(file_path, as_attachment=True)
     except FileNotFoundError:
         return jsonify({'error': 'Archivo no encontrado'}), 404
+
     
 @app.route('/pagos', methods=['POST'])
 def agregar_pago():
@@ -184,12 +202,12 @@ def alumnos_apoderado():
 @app.route('/pefilApode', methods=['GET'])
 def info_perfil():
 
-    apoderado = request.json.get('id')
+    apoderado = request.args.get('id')
     print("ID recibido:", apoderado)
 
     cursor = conexion.connection.cursor()
     sql = """SELECT 	u.id,
-                u.nom,
+                CONCAT(u.nom,' ',u.appat,' ',u.apmat),
                 u.mail,
                 a.nom,
                 a.rut
@@ -218,6 +236,65 @@ def obtener_paquetes():
 @app.route('/infoViaje', methods=['GET'])
 def verInfoViaje():
     return viaje.verInfoViaje(conexion)
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    # Puedes simplemente devolver un mensaje indicando que la sesión se ha cerrado
+    return jsonify({"message": "Sesión cerrada correctamente."}), 200
+
+@app.route('/cuotas_curso/<int:curso_id>', methods=['GET'])
+def cuotas_curso(curso_id):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """
+            SELECT 
+                c.id AS cuota_id,
+                a.rut AS alumno_rut,
+                c.valorCuota,
+                c.fechaCuota,
+                c.pagado
+            FROM cuota c
+            INNER JOIN alumno a ON c.alumnoCuota = a.id
+            WHERE a.curso = %s"""
+        cursor.execute(sql, (curso_id,))
+        cuotas = cursor.fetchall()
+        
+        if not cuotas:
+            return jsonify({'mensaje': 'No se encontraron cuotas para este curso', 'estado': 'sin datos'}), 404
+
+        total_cuotas = len(cuotas)
+        total_valor = sum(cuota[2] for cuota in cuotas)
+        pagadas = [cuota for cuota in cuotas if cuota[4] == 1]
+        pendientes = [cuota for cuota in cuotas if cuota[4] == 0]
+        total_pagado = sum(cuota[2] for cuota in pagadas)
+        total_pendiente = total_valor - total_pagado
+
+        porcentaje_avance = (total_pagado / total_valor) * 100 if total_valor > 0 else 0
+
+        return jsonify({
+            'total_valor': total_valor,
+            'total_pagado': total_pagado,
+            'total_pendiente': total_pendiente,
+            'porcentaje_avance': round(porcentaje_avance, 2),
+            'detalle_pagadas': [
+                {
+                    'cuota_id': cuota[0],
+                    'alumno_rut': cuota[1],
+                    'valor': cuota[2],
+                    'fecha_cuota': cuota[3].strftime('%Y-%m-%d')
+                } for cuota in pagadas
+            ],
+            'detalle_pendientes': [
+                {
+                    'cuota_id': cuota[0],
+                    'alumno_rut': cuota[1],
+                    'valor': cuota[2],
+                    'fecha_cuota': cuota[3].strftime('%Y-%m-%d')
+                } for cuota in pendientes
+            ],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 
