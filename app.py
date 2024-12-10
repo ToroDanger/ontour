@@ -135,6 +135,22 @@ def lista_doc():
         return jsonify({'error': 'No se proporcionó el id del apoderado'}), 400
 
 
+
+#ruta para traer los datos de los pdf
+@app.route('/archivo', methods=['GET'])
+def lista_docc():
+    cursor=conexion.connection.cursor()
+    sql = "SELECT * FROM archivo"
+    cursor.execute(sql)
+    datos = cursor.fetchall()
+    archivos = []
+    for fila in datos:
+        fila = {'id':fila[0],
+                'curso':fila[1],
+                'nombre':fila[2]}
+        archivos.append(fila)
+    return jsonify({'archivos':archivos})
+
 @app.route('/get_pdf/<filename>', methods=['GET'])
 def get_pdf(filename):
     file_path = os.path.join('uploads', filename)
