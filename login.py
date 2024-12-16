@@ -30,7 +30,7 @@ def login():
         encoded_token = Security.generate_token(authenticated_user)
         return jsonify({'success': True, 'token': encoded_token, 'user': authenticated_user.to_dict()})
     else:
-        return jsonify({'message': 'Unauthorized'}), 401
+        return jsonify({'message': 'Usuario no reconocido...'}), 401
 
 
 ############
